@@ -1,0 +1,130 @@
+# Contest corridor parameters.
+# These keys are the set that a later ROS 2 launch file can pass through.
+# This file does not turn the repository into a ROS package.
+# There is no per-frame block. A later session may add its own mount only
+# together with an explicit basis.
+
+launch_parameters:
+  - contest_width_m
+  - contest_height_m
+  - lower_boundary_above_reference_m
+  - extra_lateral_m
+  - extra_vertical_m
+  - front_ahead_of_lidar_m
+  - mount_tx_m
+  - mount_ty_m
+  - mount_tz_m
+  - mount_roll_rad
+  - mount_pitch_rad
+  - mount_yaw_rad
+  - max_extrapolation_m
+
+profile:
+  width_m:
+    value: 2.1
+    source: organizer
+    status: stated
+    basis: "Вебинар постановщиков: конкурсный поперечный габарит, ширина 2,1 м, включая выступающие элементы."
+  height_m:
+    value: 3.0
+    source: organizer
+    status: stated
+    basis: "Вебинар постановщиков: конкурсный поперечный габарит, высота 3,0 м, включая выступающие элементы."
+  includes_protrusions:
+    value: true
+    source: organizer
+    status: stated
+    basis: "Вебинар постановщиков: размеры уже включают выступающие элементы."
+
+test_object_m:
+  value: [0.30, 0.30, 0.10]
+  source: organizer
+  status: stated
+  basis: "Вебинар постановщиков: основной тестовый объект 0,30 × 0,30 × 0,10 м. На этом этапе детектор не строится."
+
+# Unknown numbers stay null. A stored zero is not a confirmed calibration.
+mount:
+  confirmed: false
+  source: unknown
+  status: unconfirmed
+  basis: "Для этих development-записей измерение установки лидара на кузове не записано."
+  translation_m:
+    x: 0.0
+    y: 0.0
+    z: 0.0
+  rpy_rad:
+    roll: 0.0
+    pitch: 0.0
+    yaw: 0.0
+  zero_is_not_a_calibration: true
+  applied_only_when_confirmed: true
+
+# Transcript does not define these. Null is the operational value.
+# Demonstration numbers live under assumptions and are not facts.
+lower_boundary_above_reference_m:
+  value: null
+  source: unknown
+  status: not_set
+  basis: "В транскрибации вебинара нижняя граница относительно опорной поверхности не задана."
+
+extra_lateral_m:
+  value: 0.0
+  source: manual_estimate
+  status: assumption
+  basis: "Дополнительный боковой запас не задан. 0 м не расширяет конкурсную ширину 2,1 м."
+
+extra_vertical_m:
+  value: 0.0
+  source: manual_estimate
+  status: assumption
+  basis: "Дополнительный вертикальный запас не задан. 0 м не расширяет конкурсную высоту 3,0 м."
+
+front_ahead_of_lidar_m:
+  value: null
+  source: unknown
+  status: not_set
+  basis: "Продольное положение передней точки поезда относительно лидара в транскрибации не задано."
+
+reference_surface:
+  value: local_ground_candidate
+  source: algorithm_estimate
+  status: estimated
+  is_rail_head: false
+  is_body_bottom: false
+  basis: "Нижняя протяжённая поверхность этапа 4A/4C. Это не уровень головок рельсов и не низ кузова."
+
+path:
+  # Same station list as the geometry experiment. Not retuned per frame.
+  expected_section_s_m: [6.0, 10.0, 15.0, 20.0, 25.0]
+  section_half_m: 0.5
+  # Reused limit from the 4B.2 fixed-s model. Not a visibility range.
+  max_extrapolation_m: 5.0
+  max_extrapolation_source: algorithm_estimate
+  forbidden_confirmed_horizon_m: [200.0, 300.0]
+  own_path_selected: false
+  select_by_max_score: false
+  select_by_sensor_axis: false
+  select_by_distance_m: null
+
+attachment:
+  enabled: false
+  source: unknown
+  status: not_set
+  basis: ""
+  s_m: null
+  l_m: null
+  # A reliable attachment still does not resolve a switch or straighten the path.
+
+assumptions:
+  lower_boundary_above_reference_m:
+    value: 0.0
+    source: manual_estimate
+    status: assumption
+    basis: "Демонстрация: пол профиля совпадает с выбранной опорной поверхностью. Это не установленный факт."
+  sensitivity_lower_boundary_m: [0.0, 0.05, 0.10, 0.15]
+  sensitivity_front_ahead_of_lidar_m: [0.0, 2.0, 5.0]
+
+working_prior:
+  source: manual_estimate
+  status: experiment_prior
+  basis: "Этапы 4A–4C: s = −Y, l = X, h = Z в осях сенсора. Это не измеренный курс и не гравитация."

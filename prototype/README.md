@@ -1,5 +1,3 @@
-# Prototype
+Видео работы программы: [Video_ROS.mp4](Video_ROS.mp4).
 
-The algorithmic prototype and demonstration materials will live here.
-
-This folder currently contains only this file.
+Страница, с которой снято видео: http://127.0.0.1:8091/ . Кнопка «Экран записи» оставляет вид для ролика.

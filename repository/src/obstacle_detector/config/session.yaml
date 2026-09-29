@@ -1,0 +1,81 @@
+# Session attachment. Not a per-frame file and not an organizer calibration.
+# The lidar mount and the path-axis attachment are different quantities.
+# None of the variants is assigned as the own path.
+
+own_path_assigned: false
+coordinate_frame: sensor_working_prior_mount_unconfirmed
+
+# Sensor to train. Zeros are not applied and are not derived from a pair midpoint.
+mount:
+  confirmed: false
+  source: unknown
+  status: unconfirmed
+  basis: "Измерение установки лидара на кузове для этой выездной сессии не записано. Середина рельсовой пары эту установку не заменяет."
+  translation_m: {x: 0.0, y: 0.0, z: 0.0}
+  rpy_rad: {roll: 0.0, pitch: 0.0, yaw: 0.0}
+  applied_only_when_confirmed: true
+
+profile:
+  width_m: 2.1
+  height_m: 3.0
+  source: organizer
+  status: stated
+
+lower_boundary_above_reference_m:
+  value: 0.0
+  source: manual_estimate
+  status: assumption
+  uncertainty_m: null
+  basis: "Пол профиля совпадает с локальной опорой только как допущение. Это не подтверждение организатора."
+
+front_ahead_of_lidar_m:
+  value: null
+  source: unknown
+  status: not_set
+  blocks_range_from_lidar: false
+  basis: "Смещение передней точки неизвестно и не отменяет расстояние от лидара."
+
+match:
+  lateral_tolerance_m: 0.25
+  tolerance_source: structure_match_m
+  heading_dl_ds: 0.0
+  heading_tolerance: 0.15
+  heading_source: manual_estimate
+  support_s_min_m: 6.0
+  support_s_max_m: 10.0
+  basis: "Согласование общее для сессии: положение в зоне 6–10 м, направление вдоль s, фактические наблюдаемые сечения. На кривой продолжение берётся из сечений гипотезы. Прямая не подтверждается на 100–300 м."
+
+variants:
+  - name: left
+    enabled: true
+    source: manual_estimate
+    not_organizer_data: true
+    not_ground_truth: true
+    own_path: false
+    frame: sensor_working_prior_mount_unconfirmed
+    s_m: 6.0
+    l_m: -1.40
+    uncertainty_l_m: 0.19
+    basis: "Этап 9B, near_pairs.json: цепочка середин −1.64…−1.26 м на четырёх development-проездах. Это привязка оси пути, не положение сенсора на кузове."
+  - name: central
+    enabled: true
+    source: manual_estimate
+    not_organizer_data: true
+    not_ground_truth: true
+    own_path: false
+    frame: sensor_working_prior_mount_unconfirmed
+    s_m: 6.0
+    l_m: -0.28
+    uncertainty_l_m: 0.25
+    basis: "Этап 9B: полоса −0.52…−0.03 м шире одного порога 0.25 м, поэтому объявлена серединой полосы, не одной парой. Близость к l=0 и к ширине 1.55 м путь не выбирает."
+  - name: right
+    enabled: true
+    source: manual_estimate
+    not_organizer_data: true
+    not_ground_truth: true
+    own_path: false
+    frame: sensor_working_prior_mount_unconfirmed
+    s_m: 6.0
+    l_m: 1.26
+    uncertainty_l_m: 0.33
+    basis: "Этап 9B: цепочка 0.95…1.60 м. Разброс шире порога согласования 0.25 м, крайние сечения могут не совпасть."

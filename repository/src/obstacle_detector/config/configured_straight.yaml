@@ -1,0 +1,65 @@
+# Explicit profile. Not the default for every recording.
+# Numbers are copied from reports/synthetic_corridor/diagnostic_corridor.yaml.
+# The lower-boundary sentence is corrected: 0 m above the rail head is not
+# 0 m above the estimated ground surface.
+# Not tuned so that E01 is detected.
+
+corridor_source: configured_straight
+enabled_only_when_selected: true
+
+mount_partial:
+  lateral: center
+  lateral_source: organizer
+  height_above_rail_head_m: 1.075
+  height_source: organizer
+  roll_pitch_yaw: unknown
+  longitudinal_position: unknown
+  lower_body_boundary: unknown
+  center_is_not_proof_of_a_straight_path: true
+
+prior:
+  s: "-Y"
+  l: "X"
+  h: "Z"
+  orientation_unconfirmed: true
+  rail_head_h_if_z_up_and_angles_zero_m: -1.075
+  rail_head_h_is_an_orientation_assumption: true
+
+profile:
+  width_m: 2.1
+  width_source: organizer
+  height_m: 3.0
+  height_source: organizer
+  center_l_m: 0.0
+  lower_boundary_above_rail_head_m: 0.0
+  lower_boundary_status: assumption
+  lower_boundary_source: existing_detector_yaml_demonstration
+  lower_boundary_is_not_zero_above_estimated_ground: true
+  lower_boundary_basis: "0 м над головкой рельса — отдельное допущение. Это не тот же уровень, что 0 м над оценённым основанием. Оценённое основание не является головкой рельса. Высота профиля 3.0 м нижнюю границу не задаёт."
+
+longitudinal:
+  s_min_m: 1.0
+  # Search admission, not a confirmed corridor and not a lidar limit.
+  # The previous 36 m cap dropped a compact face that is already in the cloud
+  # beyond that distance. 120 m covers the bands where this recording has a
+  # separable forward face. Beyond 120 m the volume is not declared free.
+  s_max_m: 120.0
+  previous_engineering_cap_m: 36.0
+  search_horizon_is_not_a_confirmed_path: true
+  far_assumption_from_s_m: 25.0
+  entire_span_is_not_observed_path_support: true
+  far_segment_is_an_assumption: true
+  not_a_proven_detection_range: true
+  outside_range_is_not_free: true
+
+# Existing session match values. Not retuned on E01.
+axis_check:
+  heading_tolerance_dl_ds: 0.15
+  heading_tolerance_source: config/session.yaml match.heading_tolerance
+  heading_tolerance_origin: manual_estimate
+  min_support_span_m: 4.0
+  min_support_span_source: minimum gap of corridor.yaml path.expected_section_s_m
+  stage2_probe_tolerances_not_used:
+    axis_span_m: 0.40
+    absolute_axis_m: 0.50
+    reason: "Допуски пробы этапа 2 смешивали все гипотезы. В ядре они не применяются."

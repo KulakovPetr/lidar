@@ -1,0 +1,82 @@
+# Decision layer. It does not create or delete candidates.
+# Numbers are the existing detector.yaml values. They were not retuned on E01.
+# Written before the verification run.
+#
+# Scope of the verified rule:
+# this accepts volume_or_suspended candidates that already have enough points
+# and a large enough observed point extent. It is not a universal detector for
+# every physical object of size 0.30 x 0.30 x 0.10 m.
+# Three different quantities stay separate:
+# - physical size of the test object (object_size_m, organizer statement);
+# - observed extent of the points in this candidate;
+# - engineering acceptance thresholds that compare that extent with 0.30 and 0.10.
+# The organizer statement is not a requirement to drop a cluster whose observed
+# extent is smaller than the full physical object. Thresholds are not changed here.
+# Evidence kinds, kept separate:
+# volume — existing 8-point and 0.30/0.10 extent rule;
+# vertical_face — at least 8 points and height extent 0.30 m when the
+#   horizontal extent is still below 0.30 m (partial face, not a resized object);
+# thin_fragment — existing thin_length_m 0.80 and thin_points 10; not a confirmed wire;
+# low_protrusion — the local branch, accepted only with the volume size bar.
+# One return stays candidate_only. A missing ground filter still blocks acceptance.
+# The ten synthetic-bag scenarios are not all verified.
+
+rule_id: configured_volume_unexplained_cluster
+scope: volume_candidates_with_enough_points_and_observed_extent
+not_a_universal_rule_for_physical_object_size_0_30_0_30_0_10: true
+temporal_confirmation_required_for_single_frame: false
+orientation_doubt_remains: true
+not_a_proven_danger_to_the_train: true
+missing_ground_does_not_promote_volume_points: true
+large_surface_is_not_rejected_for_being_large: true
+single_point_is_a_weak_observation: true
+forbidden_inputs:
+  - event_id
+  - frame_index
+  - e01_mask
+  - labeled_face_fraction
+  - object_order
+  - true_range
+
+requires_explicit_profile: configured_straight
+requires_ground_filter: true
+requires_profile_applicable_for_decision: true
+
+accept_when_all:
+  - branch_is_volume_or_suspended
+  - unique_xyz_at_least_large_min_unique_xyz
+  - height_extent_at_least_object_size_h
+  - longitudinal_or_lateral_extent_at_least_object_size
+
+parameter_origin:
+  large_min_unique_xyz:
+    file: config/detector.yaml
+    source: manual_estimate
+    status: fixed
+    meaning: "Редкий фрагмент и одна точка остаются candidate_only. Порог не подбирался по E01."
+  object_size_m:
+    file: config/detector.yaml
+    source: organizer
+    status: stated
+    order: [s_m, l_m, h_m]
+    physical_test_object_m: [0.30, 0.30, 0.10]
+    observed_extent: "observed_extent_m кандидата — размах его точек, не полный размер предмета"
+    engineering_threshold: "Сравнение размаха с 0.30 и 0.10 — инженерный минимум принятия объёмного кластера"
+    meaning: "Физический размер предмета, наблюдаемый размах и порог принятия — разные величины. Организатор не требовал отбрасывать кластер, если размах меньше полного размера предмета. Более крупная поверхность не отвергается."
+
+limits:
+  thin_objects: not_covered
+  partial_visibility: not_covered
+  sparse_far_returns: not_covered
+  local_protrusion_branch: stays_candidate_only
+  missing_ground: insufficient_evidence
+  synthetic_scenarios_all_ten_verified: false
+
+states:
+  conditional_intrusion: "Правило приняло наблюдение при заданном профиле."
+  candidate_only: "Кандидат есть, правило его не приняло."
+  no_intrusion_detected: "Правило применимо и в заданном объёме вторжения нет. Путь не объявлен свободным."
+  insufficient_evidence: "Нет явного профиля, нет фильтра основания или профиль неприменим."
+  insufficient_geometry: "Основание кадра не построено."
+  processing_timeout: "Бюджет кадра исчерпан. Это не отсутствие препятствия."
+  processing_error: "Кадр не обработан."

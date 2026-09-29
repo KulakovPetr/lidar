@@ -1,0 +1,54 @@
+# Runtime bounds for the laptop Docker VM (~7.6 GiB), not the 128 GiB stand.
+queue_depth: 2
+max_in_flight_frames: 2
+
+# Measured per frame. Do not substitute a constant visibility horizon.
+rail_visibility_m: null
+
+# geometric_score is not a probability until a calibration set exists.
+score_is_probability: false
+
+# Own route is a path hypothesis. The tunnel center is never selected.
+forbid_tunnel_center_as_route: true
+
+topics:
+  - /lidar_points
+  - /sensing/lidar/hesai128/pointcloud
+
+# Whole-run split fixed before threshold tuning. Directory names are not labels.
+# locked_test clouds must not train a norm, mine hard negatives, or set thresholds.
+# validation is also excluded from threshold search.
+split:
+  locked_test:
+    - doubleT_obstacle
+  validation:
+    - squareT_platform_squareT_switch
+  development:
+    - doubleT_platform
+    - roundT_doubleT
+    - roundT_pressureGate_roundT
+    - roundT_squareT_pressureGate_squareT
+
+# First geometry check. A development run, not the locked test.
+geometry_bag: for_hackathon/doubleT_platform
+
+# Development frames for viewing. Indices are PointCloud2 order, from 0.
+# Chosen as the first cloud and the midpoint of the topic count from bag info,
+# before any picture of these clouds was used to pick a frame.
+view_frames:
+  - run: doubleT_platform
+    message_index: 0
+  - run: doubleT_platform
+    message_index: 172
+  - run: roundT_doubleT
+    message_index: 0
+  - run: roundT_doubleT
+    message_index: 126
+  - run: roundT_pressureGate_roundT
+    message_index: 0
+  - run: roundT_pressureGate_roundT
+    message_index: 134
+  - run: roundT_squareT_pressureGate_squareT
+    message_index: 0
+  - run: roundT_squareT_pressureGate_squareT
+    message_index: 272

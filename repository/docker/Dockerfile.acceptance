@@ -1,0 +1,18 @@
+FROM lidar-obstacle:stage4-demo
+
+USER root
+RUN apt-get update && apt-get install -y --no-install-recommends python3-scipy gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY src/obstacle_detector /ws/src/obstacle_detector
+RUN gcc -O3 -fPIC -shared -o /usr/local/lib/libobstacle_components.so \
+    /ws/src/obstacle_detector/native/components.c
+COPY docker/obstacle-demo /usr/local/bin/obstacle-demo
+COPY docker/live_view.py /usr/local/bin/live_view.py
+WORKDIR /ws
+RUN bash -lc "source /opt/ros/humble/setup.bash && colcon build --merge-install --packages-select obstacle_detector" \
+    && chmod +x /usr/local/bin/obstacle-demo
+
+ENV PYTHONPATH=/ws/install/lib/python3.10/site-packages
+ENTRYPOINT ["/usr/local/bin/obstacle-offline"]
+CMD ["--help"]

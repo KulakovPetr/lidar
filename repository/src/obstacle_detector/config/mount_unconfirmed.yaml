@@ -1,0 +1,14 @@
+# Delivery mount. Zeros stay unconfirmed and are not a calibration.
+mount:
+  confirmed: false
+  source: unknown
+  status: unconfirmed
+  basis: "Измерение установки лидара на кузове не передано."
+  translation_m:
+    x: 0.0
+    y: 0.0
+    z: 0.0
+  rpy_rad:
+    roll: 0.0
+    pitch: 0.0
+    yaw: 0.0

@@ -1,0 +1,8 @@
+#!/bin/bash
+set +u
+source /opt/ros/humble/setup.bash
+set +u
+source /ws/install/setup.bash
+export AMENT_PREFIX_PATH="/ws/install:${AMENT_PREFIX_PATH}"
+set -u
+exec ros2 launch obstacle_detector detector.launch.py "$@"

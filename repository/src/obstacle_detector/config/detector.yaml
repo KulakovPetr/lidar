@@ -1,0 +1,108 @@
+# Single-frame geometric detector. One configuration for every development frame.
+# No per-frame block. Values here are not a calibration of the lidar mount.
+
+launch_parameters:
+  - lower_boundary_above_reference_m
+  - comparable_object_height_m
+  - surface_comparable_fraction
+  - cluster_gap_m
+  - large_min_unique_xyz
+  - structure_height_tolerance_m
+  - scenario_seed
+
+lower_boundary_above_reference_m:
+  value: 0.0
+  source: manual_estimate
+  status: assumption
+  basis: "Та же демонстрационная нижняя граница, что в этапе 5. Не калибровка и не факт транскрибации."
+
+comparable_object_height_m:
+  value: 0.10
+  source: organizer
+  status: stated
+  basis: "Высота основного тестового объекта. Порог неоднозначности основания, не дальность обнаружения."
+
+# A surface band at least this fraction of the 0.10 m height is not deleted.
+surface_comparable_fraction:
+  value: 0.5
+  source: manual_estimate
+  status: assumption
+  basis: "Если остаток основания не меньше половины высоты 0,10 м, точки не вычитаются молча."
+
+# Vertical half-extent around an observed line median. Missing height does not become an unlimited column.
+structure_height_tolerance_m:
+  value: 0.05
+  source: manual_estimate
+  status: assumption
+  basis: "Допуск вокруг наблюдаемой высоты линии. Точка выше допуска не удаляется. Это не калибровка рельса."
+
+cluster_gap_m:
+  value: 0.15
+  source: algorithm_estimate
+  status: fixed
+  basis: "Тот же поперечный шаг, что structure_l_gap этапа 4A. Не подбирался по кадрам."
+
+large_min_unique_xyz:
+  value: 8
+  source: manual_estimate
+  status: fixed
+  basis: "Крупный кластер и редкий фрагмент хранятся раздельно. Порог не удаляет редкие точки."
+
+scenario_seed: 4
+sparsity_unique_xyz: [48, 18, 8]
+ranges_m: [10.0, 15.0, 20.0]
+picture_range_m: 15.0
+picture_sparsity: 18
+object_size_m: [0.30, 0.30, 0.10]
+object_orientation: "оси параллельны s, l, h рабочего prior"
+thin_length_m: 0.80
+thin_points: 10
+thin_height_above_floor_m: 1.0
+single_point_height_above_floor_m: 0.50
+outside_clearance_m: 0.05
+geometry_frozen_before_insertion: true
+insertion_labels_not_passed_to_detector: true
+absence_of_candidates_is_not_clear: true
+own_path_selected: false
+display_hypothesis_is_not_own_path: true
+supported_s_min_m: 5.0
+supported_s_max_m: 30.0
+forbidden_detection_horizon_m: [100.0, 300.0]
+
+sensitivity_lower_boundary_m: [0.0, 0.05, 0.10, 0.15]
+
+# Stage 8 comparison settings. They do not replace cluster_gap_m.
+# Cell size only accelerates the neighbor search. A shared cell edge is not a link.
+link_distance_m:
+  value: 0.15
+  source: manual_estimate
+  status: fixed
+  basis: "Максимальное расстояние между исходными точками. Для первого сравнения 0,15 м, без подбора по кадрам."
+
+link_cell_size_m:
+  value: 0.15
+  source: manual_estimate
+  status: fixed
+  basis: "Размер сетки поиска соседей. Это не расстояние связи и не замена точек центрами ячеек."
+
+local_radius_m: [0.50, 1.00, 2.00]
+local_anchor_step_m: 0.50
+local_min_support: 12
+local_lower_fraction: 0.40
+local_level_gap_m: 0.08
+local_unstable_ratio: 2.0
+local_fit_min: 8
+local_holdout_min: 4
+
+# Stage 11B. Off by default. The 2-of-3 rule is an engineering assumption.
+temporal:
+  enabled: true
+  kiss_icp: false
+  local_context: false
+  confirm_frames: 2
+  confirm_window: 3
+  max_missed_frames: 1
+  max_track_age_s: 0.5
+  link_uses_link_distance_m: true
+  assumption: "2 из 3 разных кадров — инженерное допущение первой демонстрации. Это не доказательство опасности и не выбор пути."
+  train_nose_offset_m: null

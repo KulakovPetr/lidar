@@ -1,0 +1,20 @@
+FROM lidar-obstacle:stage3-intrusion
+
+USER root
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        ros-humble-rviz2 \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY src/obstacle_detector /ws/src/obstacle_detector
+WORKDIR /ws
+RUN bash -lc "source /opt/ros/humble/setup.bash && colcon build --merge-install --packages-select obstacle_detector"
+
+COPY docker/obstacle-offline /usr/local/bin/obstacle-offline
+COPY docker/obstacle-ros /usr/local/bin/obstacle-ros
+COPY docker/obstacle-demo /usr/local/bin/obstacle-demo
+RUN chmod +x /usr/local/bin/obstacle-offline /usr/local/bin/obstacle-ros /usr/local/bin/obstacle-demo
+
+ENV PYTHONPATH=/ws/install/lib/python3.10/site-packages
+
+ENTRYPOINT ["/usr/local/bin/obstacle-offline"]
+CMD ["--help"]

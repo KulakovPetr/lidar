@@ -1,5 +1,3 @@
-# Documentation
+# Документация
 
-Delivery documentation will live here: how the solution is built, how to run it, and what its limits are.
-
-This folder currently contains only this file.
+Руководство пользователя: [User_guide.docx](User_guide.docx).

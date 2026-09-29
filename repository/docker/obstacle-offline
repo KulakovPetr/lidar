@@ -1,0 +1,10 @@
+#!/bin/bash
+set +u
+source /opt/ros/humble/setup.bash
+set +u
+if [ -f /ws/install/setup.bash ]; then
+  source /ws/install/setup.bash
+  export AMENT_PREFIX_PATH="/ws/install:${AMENT_PREFIX_PATH}"
+fi
+set -u
+exec python3 -m obstacle_detector.offline_run "$@"

@@ -1,0 +1,173 @@
+#!/bin/bash
+# One Linux container: node, then bag play after the subscription is visible.
+# RViz2 is optional and is not a second DDS network.
+set +u
+source /opt/ros/humble/setup.bash
+set +u
+source /ws/install/setup.bash
+export AMENT_PREFIX_PATH="/ws/install:${AMENT_PREFIX_PATH:-}"
+export ROS_LOCALHOST_ONLY="${ROS_LOCALHOST_ONLY:-1}"
+# Shared memory stays at the image default. Forcing it off dropped the clouds.
+export HOME="${HOME:-/tmp/ros-home}"
+mkdir -p "$HOME"
+set +e
+BAG="${BAG:?нужен путь BAG}"
+RATE="${RATE:-0.05}"
+PROFILE="${PROFILE:-/ws/install/share/obstacle_detector/config/configured_straight.yaml}"
+MOUNT="${MOUNT:-/ws/install/share/obstacle_detector/config/mount_unconfirmed.yaml}"
+BUDGET="${BUDGET:-30.0}"
+case "$BUDGET" in
+  *.*) ;;
+  *) BUDGET="${BUDGET}.0" ;;
+esac
+ARTIFICIAL="${ARTIFICIAL:-false}"
+TOPIC="${TOPIC:-/lidar_points}"
+MODE="${MODE:-stream}"
+PLAY_WALL="${PLAY_WALL:-40}"
+WAIT_ACK="${WAIT_ACK:-}"
+LOG_DIR="${LOG_DIR:-/output}"
+mkdir -p "$LOG_DIR"
+pids=""
+cleanup() {
+  for pid in $pids; do
+    kill -- -"$pid" 2>/dev/null || kill "$pid" 2>/dev/null
+  done
+  pkill -f obstacle_node 2>/dev/null
+  pkill -f "ros2 bag play" 2>/dev/null
+  pkill -f /ws/install/lib/obstacle_detector/sequential_play 2>/dev/null
+  pkill -f rviz2 2>/dev/null
+  pkill -f live_view.py 2>/dev/null
+}
+trap cleanup EXIT INT TERM
+setsid obstacle-ros \
+  input_topic:="$TOPIC" \
+  corridor_source:=configured_straight \
+  profile:="$PROFILE" \
+  mount:="$MOUNT" \
+  frame_budget_s:="$BUDGET" \
+  budget_is_artificial_timeout:="$ARTIFICIAL" \
+  playback_mode:="$MODE" \
+  output_dir:="$LOG_DIR" \
+  > "$LOG_DIR/node.log" 2>&1 &
+pids="$!"
+ready=0
+for _ in $(seq 1 100); do
+  if ros2 topic info "$TOPIC" -v 2>/dev/null | grep -q "Subscription count: 1"; then
+    ready=1
+    echo SUBSCRIPTION_READY
+    break
+  fi
+  sleep 0.1
+done
+if [ "$ready" != "1" ]; then
+  echo SUBSCRIPTION_NOT_READY
+  exit 1
+fi
+capture_pid=""
+if [ -n "${CAPTURE_OUT:-}" ] && [ -f /tmp/ros_capture.py ]; then
+  python3 /tmp/ros_capture.py "$CAPTURE_OUT" "${CAPTURE_SECONDS:-50}" &
+  capture_pid=$!
+  echo CAPTURE_STARTED
+fi
+VIEW=""
+if [ "${ENABLE_VIEW:-1}" = "1" ]; then
+  if [ -f /usr/local/bin/live_view.py ]; then
+    VIEW=/usr/local/bin/live_view.py
+  elif [ -f /tmp/live_view.py ]; then
+    VIEW=/tmp/live_view.py
+  fi
+fi
+if [ -n "$VIEW" ]; then
+  MODE="$MODE" TOPIC="$TOPIC" RATE="$RATE" LOG_DIR="$LOG_DIR" setsid python3 "$VIEW" > "$LOG_DIR/live.log" 2>&1 &
+  pids="$pids $!"
+  echo LIVE_VIEW_STARTED
+  sleep 2
+fi
+if [ "${RUN_RVIZ:-0}" = "1" ]; then
+  if [ -z "${DISPLAY:-}" ]; then
+    echo RVIZ_SKIPPED_NO_DISPLAY
+  else
+    rviz_config=/ws/install/share/obstacle_detector/rviz/detector.rviz
+    if [ "$TOPIC" = "/sensing/lidar/hesai128/pointcloud" ]; then
+      rviz_config=/ws/install/share/obstacle_detector/rviz/detector_livox.rviz
+    fi
+    setsid rviz2 -d "$rviz_config" > "$LOG_DIR/rviz.log" 2>&1 &
+    pids="$pids $!"
+    echo RVIZ_STARTED
+  fi
+fi
+if [ "$MODE" = "sequential" ]; then
+  echo "SEQUENTIAL_PLAYER_IS_NOT_ROS2_BAG_PLAY"
+  echo "DDS_ACK_IS_NOT_COMPUTE_COMPLETION"
+  play_args=(/ws/install/lib/obstacle_detector/sequential_play --bag "$BAG" --topic "$TOPIC" --output "$LOG_DIR" --budget "$BUDGET")
+  if [ -n "${START:-}" ]; then
+    play_args+=(--start "$START")
+  fi
+  if [ -n "${COUNT:-}" ]; then
+    play_args+=(--count "$COUNT")
+  fi
+  setsid "${play_args[@]}" > "$LOG_DIR/play.log" 2>&1 &
+  play_pid=$!
+  pids="$pids $play_pid"
+  wait "$play_pid"
+  echo "PLAY_EXIT $?"
+else
+  echo "STREAM_MODE ros2_bag_play"
+  echo "PLAYBACK_RATE $RATE"
+  echo "PLAYBACK_IS_NOT_COMPUTE_RATE"
+  play_args=(ros2 bag play "$BAG" -r "$RATE" --disable-keyboard-controls --start-paused)
+  if [ -n "$WAIT_ACK" ]; then
+    play_args+=(--wait-for-all-acked "$WAIT_ACK")
+  fi
+  setsid "${play_args[@]}" > "$LOG_DIR/play.log" 2>&1 &
+  play_pid=$!
+  pids="$pids $play_pid"
+  for _ in $(seq 1 80); do
+    pubs=$(ros2 topic info "$TOPIC" 2>/dev/null | awk '/Publisher count:/{print $3}')
+    if [ -n "$pubs" ] && [ "$pubs" != "0" ]; then
+      echo "PUBLISHER_READY count=$pubs"
+      break
+    fi
+    sleep 0.1
+  done
+  ros2 service call /rosbag2_player/resume rosbag2_interfaces/srv/Resume > "$LOG_DIR/resume.log" 2>&1
+  waited=0
+  while kill -0 "$play_pid" 2>/dev/null; do
+    sleep 0.2
+    waited=$((waited + 1))
+    if [ "$waited" -gt $((PLAY_WALL * 5)) ]; then
+      kill "$play_pid" 2>/dev/null
+      echo PLAY_WALL_TIMEOUT
+      break
+    fi
+  done
+  wait "$play_pid"
+  echo "PLAY_EXIT $?"
+fi
+if [ "$MODE" != "sequential" ]; then
+  python3 - <<'PY'
+import json
+import time
+import rclpy
+from rclpy.node import Node
+from std_msgs.msg import String
+rclpy.init()
+node = Node("stream_status")
+pub = node.create_publisher(String, "/run_status", 10)
+msg = String()
+msg.data = json.dumps({"state": "finished", "player": "ros2_bag_play", "ros2_bag_play": True}, ensure_ascii=False)
+deadline = time.monotonic() + 1.5
+while time.monotonic() < deadline:
+    pub.publish(msg)
+    rclpy.spin_once(node, timeout_sec=0.1)
+node.destroy_node()
+rclpy.shutdown()
+PY
+fi
+# Leave the node up briefly so a late result can be published.
+sleep "${SETTLE:-2}"
+if [ -n "$capture_pid" ]; then
+  kill -TERM "$capture_pid" 2>/dev/null || true
+  wait "$capture_pid" 2>/dev/null || true
+fi
+echo DEMO_DONE

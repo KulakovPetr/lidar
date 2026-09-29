@@ -1,0 +1,66 @@
+# Stage 9A batch launch. Detector thresholds stay in detector.yaml and are not set here.
+# Variant names select an already frozen stage-8 algorithm. They are not per-frame tunings.
+
+default_variant: C
+
+variants:
+  B:
+    connectivity: distance
+    local_protrusions: false
+  C:
+    connectivity: distance
+    local_protrusions: true
+
+# Working prior used when the mount in corridor.yaml is unconfirmed.
+# This is an assumption, not a calibration. Every run report must repeat it.
+coordinate_prior:
+  status: assumption
+  mapping: "s=-Y, l=X, h=Z"
+  inverse: "x=l, y=-s, z=h"
+  note: "Установка лидара не подтверждена. Нулевые углы файла не применяются как калибровка."
+
+# Both names known from the recorded bags. The runner does not merge topics.
+known_pointcloud_topics:
+  - /lidar_points
+  - /sensing/lidar/hesai128/pointcloud
+
+topic_rule: >-
+  Если в bag один топик PointCloud2, взять его.
+  Если их несколько и ровно один входит в known_pointcloud_topics, взять его и записать выбор.
+  Иначе требовать --topic. Топики не объединять.
+
+# Chosen from pipeline.yaml view_frames before any stage-9 detection result.
+# Midpoint message indices already fixed for viewing, not picked from candidate counts.
+bc_sample:
+  - run: doubleT_platform
+    message_index: 172
+  - run: roundT_doubleT
+    message_index: 126
+  - run: roundT_pressureGate_roundT
+    message_index: 134
+  - run: roundT_squareT_pressureGate_squareT
+    message_index: 272
+
+# Same pre-registered indices are the planned pictures.
+# After the run, add the frame with the largest per-hypothesis candidate count
+# and the earliest frame of the most common geometry failure. Do not retune.
+picture_frames:
+  - run: doubleT_platform
+    message_index: 172
+  - run: roundT_doubleT
+    message_index: 126
+  - run: roundT_pressureGate_roundT
+    message_index: 134
+  - run: roundT_squareT_pressureGate_squareT
+    message_index: 272
+
+picture_extra_rule: >-
+  По каждому проезду дополнительно: кадр с максимальным числом кандидатов одной гипотезы
+  (при равенстве — меньший номер кадра) и самый ранний кадр самого частого отказа геометрии.
+  Сумма кандидатов по гипотезам не используется.
+
+no_cross_frame_state: true
+resume_does_not_rewrite_completed_frames: true
+absence_of_candidates_is_not_clear: true
+candidate_sum_is_not_an_obstacle_count: true
+parameters_not_tuned_on_this_stage: true

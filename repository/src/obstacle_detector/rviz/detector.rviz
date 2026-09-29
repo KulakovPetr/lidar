@@ -1,0 +1,70 @@
+Panels:
+  - Class: rviz_common/Displays
+    Name: Displays
+Visualization Manager:
+  Displays:
+    - Class: rviz_default_plugins/PointCloud2
+      Name: processed_frame
+      Enabled: true
+      Topic:
+        Depth: 10
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /processed_cloud
+      Style: Points
+      Size (Pixels): 2
+      Color Transformer: FlatColor
+      Color: 154; 170; 204
+      Decay Time: 0
+      Queue Size: 10
+    - Class: rviz_default_plugins/PointCloud2
+      Name: accepted_cluster
+      Enabled: true
+      Topic:
+        Depth: 10
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /rviz_cloud
+      Style: Points
+      Size (Pixels): 5
+      Color Transformer: Intensity
+      Channel Name: label
+      Use rainbow: true
+      Min Intensity: 0
+      Max Intensity: 1
+      Decay Time: 0
+      Queue Size: 10
+    - Class: rviz_default_plugins/MarkerArray
+      Name: range_and_status
+      Enabled: true
+      Topic:
+        Depth: 10
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /markers
+      Namespaces:
+        decision: true
+        conditional_intrusion: true
+        candidate_only: true
+  Global Options:
+    Fixed Frame: hesai_lidar
+    Background Color: 28; 29; 34
+  Views:
+    Current:
+      Class: rviz_default_plugins/Orbit
+      Name: corridor
+      Target Frame: hesai_lidar
+      Distance: 80
+      Focal Point:
+        X: 0
+        Y: -25
+        Z: 1
+      Pitch: 0.45
+      Yaw: 1.5708
+      Focal Shape Size: 0.2
+Window Geometry:
+  Height: 900
+  Width: 1400
